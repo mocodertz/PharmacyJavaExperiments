@@ -8,9 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("pharms")
@@ -18,6 +16,11 @@ public class PharmController {
 
     private final PharmRepository pharms;
     private final StockRepository stocks;
+
+    static Integer OUT_OF_DATE_COUNT = 2;
+    static Integer OUT_OF_DATE_CHARGE = Calendar.MONTH;
+
+    static Integer OUT_OF_STOCK_AMOUNT = 100;
 
     @Autowired
     public PharmController(PharmRepository pharms, StockRepository stocks)
@@ -42,21 +45,50 @@ public class PharmController {
     }
 
     @GetMapping("{id}/stock/out_of_date/")
-    public List<Stock> outOfStock(@PathVariable("id") Pharm pharm) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MONTH, 2);
-
-        return this.stocks.findByUseUntilDateLessThanEqual( calendar.getTime() );
+    public List<Stock> outOfDate(@PathVariable("id") Pharm pharm) {
+        return this.stocks.findByUseUntilDateLessThanEqual(
+            this.getDateOut()
+        );
     }
 
     @GetMapping("{id}/stock/out_of_stock/")
-    public List<Stock> outOfDate(@PathVariable("id") Pharm pharm) {
-        return this.stocks.findByPharmId(pharm.getId());
+    public List<Stock> outOfStock(@PathVariable("id") Pharm pharm) {
+
+        List <Stock> stockStatus = this.stocks.findByPharmIdAndUseUntilDateGreaterThan(
+            pharm.getId(), this.getDateOut()
+        );
+
+        HashMap<Integer, Stock> drugStatuses = new HashMap<Integer, Stock>();
+        for(Stock item : stockStatus) {
+            if(!drugStatuses.containsKey(item.getDrugId())) {
+                drugStatuses.put(item.getDrugId(), item);
+            } else {
+                Stock existing = drugStatuses.get(item.getDrugId());
+                existing.setAmount( existing.getAmount() + item.getAmount() );
+            }
+        }
+
+        stockStatus.clear();
+        for(Map.Entry<Integer, Stock> entry : drugStatuses.entrySet()) {
+            Stock tmpStock = entry.getValue();
+            if(tmpStock.getAmount() < OUT_OF_STOCK_AMOUNT) {
+                stockStatus.add(tmpStock);
+            }
+        }
+
+        return stockStatus;
     }
 
     @PostMapping("fill/")
     public Object create(@RequestBody Stock stock) {
         return  this.stocks.save(stock);
+    }
+
+    private Date getDateOut() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(OUT_OF_DATE_CHARGE, OUT_OF_DATE_COUNT);
+
+        return calendar.getTime();
     }
 
 }
