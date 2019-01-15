@@ -10,4 +10,7 @@ public interface DrugRepository extends JpaRepository<Drug, Integer> {
     List<Drug> findByVendor(String vendor);
     List<Drug> findByName(String name);
 
+    List<Drug> findByNameContaining(String name);
+    List<Drug> findByVendorContaining(String name);
+
 }

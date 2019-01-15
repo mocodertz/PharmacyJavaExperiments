@@ -1,9 +1,7 @@
 package khomenko.pharmacy.repository;
 
-import khomenko.pharmacy.domain.Pharm;
 import khomenko.pharmacy.domain.Stock;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.Date;
 import java.util.List;

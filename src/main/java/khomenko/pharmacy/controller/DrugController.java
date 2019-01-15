@@ -2,7 +2,6 @@ package khomenko.pharmacy.controller;
 
 import khomenko.pharmacy.domain.Drug;
 import khomenko.pharmacy.repository.DrugRepository;
-import org.hibernate.Criteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
